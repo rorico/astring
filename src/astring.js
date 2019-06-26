@@ -449,8 +449,8 @@ export const baseGenerator = {
   FunctionDeclaration: (FunctionDeclaration = function(node, state) {
     state.write(
       (node.async ? 'async ' : '') +
-        (node.generator ? 'function* ' : 'function ') +
-        (node.id ? node.id.name : ''),
+        (node.generator ? 'function* ' : 'function') +
+        (node.id ? ' ' +node.id.name : ''),
       node,
     )
     formatSequence(state, node.params)
