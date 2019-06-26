@@ -216,21 +216,21 @@ export const baseGenerator = {
     const indent = state.indent.repeat(state.indentLevel)
     const { lineEnd, writeComments } = state
     if (writeComments && node.comments != null) {
-      this.formatComments(state, node.comments, indent, lineEnd)
+      this.formatComments(node.comments, state, indent, lineEnd)
     }
     const statements = node.body
     const { length } = statements
     for (let i = 0; i < length; i++) {
       const statement = statements[i]
       if (writeComments && statement.comments != null) {
-        this.formatComments(state, statement.comments, indent, lineEnd)
+        this.formatComments(statement.comments, state, indent, lineEnd)
       }
       state.write(indent)
       this[statement.type](statement, state)
       state.write(lineEnd)
     }
     if (writeComments && node.trailingComments != null) {
-      this.formatComments(state, node.trailingComments, indent, lineEnd)
+      this.formatComments(node.trailingComments, state, indent, lineEnd)
     }
   },
   BlockStatement: (BlockStatement = function(node, state) {
@@ -242,13 +242,13 @@ export const baseGenerator = {
     if (statements != null && statements.length > 0) {
       state.write(lineEnd)
       if (writeComments && node.comments != null) {
-        this.formatComments(state, node.comments, statementIndent, lineEnd)
+        this.formatComments(node.comments, state, statementIndent, lineEnd)
       }
       const { length } = statements
       for (let i = 0; i < length; i++) {
         const statement = statements[i]
         if (writeComments && statement.comments != null) {
-          this.formatComments(state, statement.comments, statementIndent, lineEnd)
+          this.formatComments(statement.comments, state, statementIndent, lineEnd)
         }
         state.write(statementIndent)
         this[statement.type](statement, state)
@@ -258,12 +258,12 @@ export const baseGenerator = {
     } else {
       if (writeComments && node.comments != null) {
         state.write(lineEnd)
-        this.formatComments(state, node.comments, statementIndent, lineEnd)
+        this.formatComments(node.comments, state, statementIndent, lineEnd)
         state.write(indent)
       }
     }
     if (writeComments && node.trailingComments != null) {
-      this.formatComments(state, node.trailingComments, statementIndent, lineEnd)
+      this.formatComments(node.trailingComments, state, statementIndent, lineEnd)
     }
     state.write('}')
     state.indentLevel--
@@ -338,7 +338,7 @@ export const baseGenerator = {
     for (let i = 0; i < occurencesCount; i++) {
       const occurence = occurences[i]
       if (writeComments && occurence.comments != null) {
-        this.formatComments(state, occurence.comments, caseIndent, lineEnd)
+        this.formatComments(occurence.comments, state, caseIndent, lineEnd)
       }
       if (occurence.test) {
         state.write(caseIndent + 'case ')
@@ -352,7 +352,7 @@ export const baseGenerator = {
       for (let i = 0; i < consequentCount; i++) {
         const statement = consequent[i]
         if (writeComments && statement.comments != null) {
-          this.formatComments(state, statement.comments, statementIndent, lineEnd)
+          this.formatComments(statement.comments, state, statementIndent, lineEnd)
         }
         state.write(statementIndent)
         this[statement.type](statement, state)
@@ -698,7 +698,7 @@ export const baseGenerator = {
     if (node.properties.length > 0) {
       state.write(lineEnd)
       if (writeComments && node.comments != null) {
-        this.formatComments(state, node.comments, propertyIndent, lineEnd)
+        this.formatComments(node.comments, state, propertyIndent, lineEnd)
       }
       const comma = ',' + lineEnd
       const { properties } = node,
@@ -706,7 +706,7 @@ export const baseGenerator = {
       for (let i = 0; ; ) {
         const property = properties[i]
         if (writeComments && property.comments != null) {
-          this.formatComments(state, property.comments, propertyIndent, lineEnd)
+          this.formatComments(property.comments, state, propertyIndent, lineEnd)
         }
         state.write(propertyIndent)
         this[property.type](property, state)
@@ -718,20 +718,20 @@ export const baseGenerator = {
       }
       state.write(lineEnd)
       if (writeComments && node.trailingComments != null) {
-        this.formatComments(state, node.trailingComments, propertyIndent, lineEnd)
+        this.formatComments(node.trailingComments, state, propertyIndent, lineEnd)
       }
       state.write(indent + '}')
     } else if (writeComments) {
       if (node.comments != null) {
         state.write(lineEnd)
-        this.formatComments(state, node.comments, propertyIndent, lineEnd)
+        this.formatComments(node.comments, state, propertyIndent, lineEnd)
         if (node.trailingComments != null) {
-          this.formatComments(state, node.trailingComments, propertyIndent, lineEnd)
+          this.formatComments(node.trailingComments, state, propertyIndent, lineEnd)
         }
         state.write(indent + '}')
       } else if (node.trailingComments != null) {
         state.write(lineEnd)
-        this.formatComments(state, node.trailingComments, propertyIndent, lineEnd)
+        this.formatComments(node.trailingComments, state, propertyIndent, lineEnd)
         state.write(indent + '}')
       } else {
         state.write('}')
@@ -918,7 +918,7 @@ export const baseGenerator = {
     const { regex } = node
     state.write(`/${regex.pattern}/${regex.flags}`, node)
   },
-  formatComments(state, comments, indent, lineEnd) {
+  formatComments(comments, state, indent, lineEnd) {
     /*
     Writes into `state` the provided list of `comments`, with the given `indent` and `lineEnd` strings.
     Line comments will end with `"\n"` regardless of the value of `lineEnd`.
