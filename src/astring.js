@@ -168,28 +168,6 @@ function reindent(state, text, indent, lineEnd) {
   }
 }
 
-function formatComments(state, comments, indent, lineEnd) {
-  /*
-  Writes into `state` the provided list of `comments`, with the given `indent` and `lineEnd` strings.
-  Line comments will end with `"\n"` regardless of the value of `lineEnd`.
-  Expects to start on a new unindented line.
-  */
-  const { length } = comments
-  for (let i = 0; i < length; i++) {
-    const comment = comments[i]
-    state.write(indent)
-    if (comment.type[0] === 'L') {
-      // Line comment
-      state.write('// ' + comment.value.trim() + '\n')
-    } else {
-      // Block comment
-      state.write('/*')
-      reindent(state, comment.value, indent, lineEnd)
-      state.write('*/' + lineEnd)
-    }
-  }
-}
-
 function hasCallExpression(node) {
   /*
   Returns `true` if the provided `node` contains a call expression and `false` otherwise.
@@ -238,21 +216,21 @@ export const baseGenerator = {
     const indent = state.indent.repeat(state.indentLevel)
     const { lineEnd, writeComments } = state
     if (writeComments && node.comments != null) {
-      formatComments(state, node.comments, indent, lineEnd)
+      this.formatComments(state, node.comments, indent, lineEnd)
     }
     const statements = node.body
     const { length } = statements
     for (let i = 0; i < length; i++) {
       const statement = statements[i]
       if (writeComments && statement.comments != null) {
-        formatComments(state, statement.comments, indent, lineEnd)
+        this.formatComments(state, statement.comments, indent, lineEnd)
       }
       state.write(indent)
       this[statement.type](statement, state)
       state.write(lineEnd)
     }
     if (writeComments && node.trailingComments != null) {
-      formatComments(state, node.trailingComments, indent, lineEnd)
+      this.formatComments(state, node.trailingComments, indent, lineEnd)
     }
   },
   BlockStatement: (BlockStatement = function(node, state) {
@@ -264,13 +242,13 @@ export const baseGenerator = {
     if (statements != null && statements.length > 0) {
       state.write(lineEnd)
       if (writeComments && node.comments != null) {
-        formatComments(state, node.comments, statementIndent, lineEnd)
+        this.formatComments(state, node.comments, statementIndent, lineEnd)
       }
       const { length } = statements
       for (let i = 0; i < length; i++) {
         const statement = statements[i]
         if (writeComments && statement.comments != null) {
-          formatComments(state, statement.comments, statementIndent, lineEnd)
+          this.formatComments(state, statement.comments, statementIndent, lineEnd)
         }
         state.write(statementIndent)
         this[statement.type](statement, state)
@@ -280,12 +258,12 @@ export const baseGenerator = {
     } else {
       if (writeComments && node.comments != null) {
         state.write(lineEnd)
-        formatComments(state, node.comments, statementIndent, lineEnd)
+        this.formatComments(state, node.comments, statementIndent, lineEnd)
         state.write(indent)
       }
     }
     if (writeComments && node.trailingComments != null) {
-      formatComments(state, node.trailingComments, statementIndent, lineEnd)
+      this.formatComments(state, node.trailingComments, statementIndent, lineEnd)
     }
     state.write('}')
     state.indentLevel--
@@ -360,7 +338,7 @@ export const baseGenerator = {
     for (let i = 0; i < occurencesCount; i++) {
       const occurence = occurences[i]
       if (writeComments && occurence.comments != null) {
-        formatComments(state, occurence.comments, caseIndent, lineEnd)
+        this.formatComments(state, occurence.comments, caseIndent, lineEnd)
       }
       if (occurence.test) {
         state.write(caseIndent + 'case ')
@@ -374,7 +352,7 @@ export const baseGenerator = {
       for (let i = 0; i < consequentCount; i++) {
         const statement = consequent[i]
         if (writeComments && statement.comments != null) {
-          formatComments(state, statement.comments, statementIndent, lineEnd)
+          this.formatComments(state, statement.comments, statementIndent, lineEnd)
         }
         state.write(statementIndent)
         this[statement.type](statement, state)
@@ -720,7 +698,7 @@ export const baseGenerator = {
     if (node.properties.length > 0) {
       state.write(lineEnd)
       if (writeComments && node.comments != null) {
-        formatComments(state, node.comments, propertyIndent, lineEnd)
+        this.formatComments(state, node.comments, propertyIndent, lineEnd)
       }
       const comma = ',' + lineEnd
       const { properties } = node,
@@ -728,7 +706,7 @@ export const baseGenerator = {
       for (let i = 0; ; ) {
         const property = properties[i]
         if (writeComments && property.comments != null) {
-          formatComments(state, property.comments, propertyIndent, lineEnd)
+          this.formatComments(state, property.comments, propertyIndent, lineEnd)
         }
         state.write(propertyIndent)
         this[property.type](property, state)
@@ -740,20 +718,20 @@ export const baseGenerator = {
       }
       state.write(lineEnd)
       if (writeComments && node.trailingComments != null) {
-        formatComments(state, node.trailingComments, propertyIndent, lineEnd)
+        this.formatComments(state, node.trailingComments, propertyIndent, lineEnd)
       }
       state.write(indent + '}')
     } else if (writeComments) {
       if (node.comments != null) {
         state.write(lineEnd)
-        formatComments(state, node.comments, propertyIndent, lineEnd)
+        this.formatComments(state, node.comments, propertyIndent, lineEnd)
         if (node.trailingComments != null) {
-          formatComments(state, node.trailingComments, propertyIndent, lineEnd)
+          this.formatComments(state, node.trailingComments, propertyIndent, lineEnd)
         }
         state.write(indent + '}')
       } else if (node.trailingComments != null) {
         state.write(lineEnd)
-        formatComments(state, node.trailingComments, propertyIndent, lineEnd)
+        this.formatComments(state, node.trailingComments, propertyIndent, lineEnd)
         state.write(indent + '}')
       } else {
         state.write('}')
@@ -939,6 +917,27 @@ export const baseGenerator = {
   RegExpLiteral(node, state) {
     const { regex } = node
     state.write(`/${regex.pattern}/${regex.flags}`, node)
+  },
+  formatComments(state, comments, indent, lineEnd) {
+    /*
+    Writes into `state` the provided list of `comments`, with the given `indent` and `lineEnd` strings.
+    Line comments will end with `"\n"` regardless of the value of `lineEnd`.
+    Expects to start on a new unindented line.
+    */
+    const { length } = comments
+    for (let i = 0; i < length; i++) {
+      const comment = comments[i]
+      state.write(indent)
+      if (comment.type[0] === 'L') {
+        // Line comment
+        state.write('// ' + comment.value.trim() + '\n')
+      } else {
+        // Block comment
+        state.write('/*')
+        reindent(state, comment.value, indent, lineEnd)
+        state.write('*/' + lineEnd)
+      }
+    }
   },
 }
 
