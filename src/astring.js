@@ -977,9 +977,17 @@ class State {
       }
     }
   }
+  escape(txt) {
+    return txt
+     .replace(/&/g, "&amp;")
+     .replace(/</g, "&lt;")
+     .replace(/>/g, "&gt;")
+     .replace(/"/g, "&quot;")
+     .replace(/'/g, "&#039;")
+  }
 
-  write(code) {
-    this.output += code
+  write(code, node, unesc) {
+    this.output += unesc ? code : this.escape(code)
   }
 
   writeToStream(code) {
